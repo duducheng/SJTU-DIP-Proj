@@ -4,6 +4,11 @@ from io import BytesIO
 import PIL.Image
 import numpy as np
 
+import matplotlib as mpl
+mpl.use('Agg')
+
+import matplotlib.pyplot as plt
+
 
 APP_PORT = 5005
 APP_HOST = "0.0.0.0"
@@ -13,7 +18,8 @@ IMG_FOLDER = 'imgs/'
 class State:
 
     def __init__(self):
-        self.files = os.listdir(IMG_FOLDER)
+        self.files = [f for f in os.listdir(IMG_FOLDER) if (f.endswith(".png")
+                     or f.endswith(".jpg") or f.endswith(".jpeg"))]
         self.pid = 1
         self._img = None
         self.img = self.files[0]
@@ -26,15 +32,17 @@ class State:
     def img(self, x):
         self._img = x
         self.pil = PIL.Image.open(os.path.join(IMG_FOLDER, self.img))
-        self.grayscale_pil = self.pil.convert('LA')
-        self.arr = np.array(self.grayscale_pil)
+        self.grayscale_pil = self.pil.convert('L')
+        self.hist = self.grayscale_pil.histogram()
+        h, w = self.pil.size
+        self.size_ratio = w / h
 
     def jsonify(self):
         return jsonify({"pid": self.pid,
                         "img": self.img,
                         "files": self.files})
 
-    def get_results(self):
+    def get_result(self):
         if self.pid:
             pass
         return serve_pil(self.pil)
@@ -53,8 +61,14 @@ def serve_pil(pil):
     return send_file(img_io, mimetype='image/png')
 
 
-def serve_histrogram(arr):
-    return 
+def serve_histrogram(hist, ratio):
+    fig, ax = plt.subplots(figsize=(10, 10*ratio))
+    ax.bar(range(256), height=hist, width=1)
+    # ax.axis("off")
+    img_io = BytesIO()
+    fig.savefig(img_io, format='png')
+    img_io.seek(0)
+    return send_file(img_io, mimetype='image/png')
 
 
 state = State()
@@ -82,7 +96,9 @@ def return_pic(picture_id):
         return serve_pil(state.pil)
     if picture_id == 2:
         return serve_pil(state.grayscale_pil)
-    return state.get_results()
+    if picture_id == 3:
+        return serve_histrogram(state.hist, state.size_ratio)
+    return state.get_result()
 
 
 @app.route("/project_pic")
