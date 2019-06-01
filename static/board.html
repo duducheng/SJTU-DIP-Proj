@@ -31,9 +31,10 @@
                 </ul>
                 <img :src="'/project_pic?a='+Math.random()" class="img-thumbnail">
 
-                <select v-model="img">
+                <h5>Input image: <select v-model="img">
                     <option v-for="x in files">{{x}}</option>
-                </select>
+                </select></h5>
+
 
 
             </div>
@@ -42,19 +43,23 @@
 
                 <div class="row">
                     <div class="col">
-                        <!-- <span class="breadcrumb">Original Image</span> -->
+
+                        Original image:
                         <img :src="'/pic/1?a='+Math.random()" class="img-thumbnail">
                     </div>
                     <div class="col">
+                        Grayscale image:
                         <img :src="'/pic/2?a='+Math.random()" class="img-thumbnail">
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col">
+                        Histogram:
                         <img :src="'/pic/3?a='+Math.random()" class="img-thumbnail">
                     </div>
                     <div class="col">
+                        Result image:
                         <img :src="'/pic/4?a='+Math.random()" class="img-thumbnail">
                     </div>
                 </div>
@@ -74,5 +79,3 @@
 
     <script src="static/app.js"></script>
 </body>
-
-</html>
