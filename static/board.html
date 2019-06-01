@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>DIP Project</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="static/bootstrap.min.css" rel="stylesheet">
+    <link href="static/style.css" rel="stylesheet">
+    <script src="static/vue.js"></script>
+    <script src="static/vue-resource.js"></script>
+    <link href="static/favicon.ico" rel="icon" type="image/x-icon" />
+
+</head>
+
+
+<body>
+
+    <h1 align=center>Advanced Digital Image Analysis Project</h1>
+
+    <div class="container" id="app">
+        <div class="row">
+            <div class="col-4">
+
+                <h3>Select a project:</h3>
+                <ul class="nav nav-tabs nav-pills flex-column">
+                    <li class="nav-item" v-for="item in [1,2,3,4]">
+                        <a class="nav-link" v-bind:class="{active: pid==item}" v-on:click="project(item)">Project {{item}}</a>
+                    </li>
+                </ul>
+                <img :src="'/project_pic?a='+Math.random()" class="img-thumbnail">
+
+                <select v-model="img">
+                    <option v-for="x in files">{{x}}</option>
+                </select>
+
+
+            </div>
+            <div class="col-2"></div>
+            <div class="col-6">
+
+                <div class="row">
+                    <div class="col">
+                        <!-- <span class="breadcrumb">Original Image</span> -->
+                        <img :src="'/pic/1?a='+Math.random()" class="img-thumbnail">
+                    </div>
+                    <div class="col">
+                        <img :src="'/pic/2?a='+Math.random()" class="img-thumbnail">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <img :src="'/pic/3?a='+Math.random()" class="img-thumbnail">
+                    </div>
+                    <div class="col">
+                        <img :src="'/pic/4?a='+Math.random()" class="img-thumbnail">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <h3 align="center">
+        Copyright © 2019 <a href="https://github.com/duducheng">Jiancheng Yang</a>
+    </h3>
+
+
+
+    <script src="static/app.js"></script>
+</body>
+
+</html>
