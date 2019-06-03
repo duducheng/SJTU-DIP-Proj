@@ -8,6 +8,11 @@ import matplotlib as mpl
 mpl.use('Agg')
 
 import matplotlib.pyplot as plt
+from skimage.filters import threshold_otsu, threshold_li
+from skimage.filters import roberts, sobel, prewitt
+from skimage.filters import gaussian, median
+from skimage.morphology import disk
+from skimage.morphology import erosion, dilation, opening, closing
 
 
 APP_PORT = 5005
@@ -22,7 +27,10 @@ class State:
                      or f.endswith(".jpg") or f.endswith(".jpeg"))]
         self.pid = 1
         self._img = None
+        self._option_value = None
         self.img = self.files[0]
+        self.clear_choice()
+        self.clear_option()
 
     @property
     def img(self):
@@ -40,18 +48,117 @@ class State:
     def jsonify(self):
         return jsonify({"pid": self.pid,
                         "img": self.img,
-                        "files": self.files})
+                        "files": self.files,
+                        "choices": self.choices,
+                        "choice": self.choice,
+                        "inputVisible": self.input_visible,
+                        "optionValue": self.option_value})
+
+    def clear_choice(self):
+        self.choice = self.choices[0]
+
+    def clear_option(self):
+        self.option_value = None
+
+    @property
+    def option_value(self):
+        return self._option_value
+
+    @option_value.setter
+    def option_value(self, x):
+        illegal = True
+        if self.pid == 1:
+            try:
+                v = int(x)
+                if 0 <= v <= 255:
+                    self._option_value = v
+                    illegal = False
+            except:
+                pass
+            if illegal:
+                self._option_value = 67
+                illegal = False
+        if self.pid == 2:
+            try:
+                v = float(x)
+                if self.choice == "NR:med":
+                    v = max(1, int(v))
+                else:
+                    v = max(0.1, v)
+                self._option_value = v
+                illegal = False
+            except:
+                pass
+            if illegal:
+                self._option_value = 3
+                illegal = False
+        if self.pid == 3:
+            try:
+                v = int(x)
+                self._option_value = max(1, v)
+                illegal = False
+            except:
+                pass
+            if illegal:
+                self._option_value = 3
+                illegal = False
+        if illegal:
+            self._option_value = None
+
+    @property
+    def choices(self):
+        if self.pid == 1:
+            return ["ostu", "entropy", "manual"]
+        if self.pid == 2:
+            return ["ED:Rob", "ED:Prew", "ED:Sob", "NR:gaus", "NR:med"]
+        if self.pid == 3:
+            return ["dilation", 'erosion', 'opening', 'closing']
+        if self.pid == 4:
+            return ["distance_transform", 'skeleton', 'skeleton_res']
+        return []
+
+    @property
+    def input_visible(self):
+        if self.pid == 1 and (self.choice == "manual"):
+            return True
+        if self.pid == 2 and (self.choice in ["NR:gaus", "NR:med"]):
+            return True
+        if self.pid == 3:
+            return True
+        return False
 
     def get_result(self):
-        if self.pid:
-            pass
-        return serve_pil(self.pil)
-        thresh = 67
-        if picture == 2:
-            arr = np.array(self.pil)
-            pil = PIL.Image.fromarray(((arr>67)*255).astype(np.uint8))
-            return serve_pil(pil)
-        return serve_pil(self.pil)
+        arr = np.array(self.grayscale_pil)
+        if self.pid == 1:
+            if self.choice == 'ostu':
+                self.option_value = threshold_otsu(arr)
+            elif self.choice == 'entropy':
+                self.option_value = threshold_li(arr)
+            else:
+                pass
+            result_arr = (arr > self.option_value)*255
+        elif self.pid == 2:
+            if self.choice == 'ED:Rob':
+                result_arr = (1-roberts(arr))*255.
+            elif self.choice == 'ED:Prew':
+                result_arr = (1-prewitt(arr))*255.
+            elif self.choice == 'ED:Sob':
+                result_arr = (1-sobel(arr))*255.
+            elif self.choice == 'NR:gaus':
+                result_arr = gaussian(arr, sigma=self.option_value)*255.
+            elif self.choice == 'NR:med':
+                result_arr = median(arr, disk(self.option_value))
+            else:
+                pass
+        elif self.pid == 3:
+            fn_dict = {"dilation": dilation, "erosion": erosion, "opening": opening,"closing": closing}
+            fn = fn_dict[self.choice]
+            result_arr = fn(arr, disk(self.option_value))
+        else:
+            result_arr = arr
+            
+        result_pil = PIL.Image.fromarray((result_arr).astype(np.uint8))
+        return serve_pil(result_pil)
 
 
 def serve_pil(pil):
@@ -85,8 +192,14 @@ def get_state():
     if request.method == "POST":
         if "pid" in request.json:   
             state.pid = request.json['pid']
+            state.clear_choice()
+            state.clear_option()
         if "img" in request.json:   
             state.img = request.json['img']
+        if "choice" in request.json:
+            state.choice = request.json['choice']
+        if "optionValue" in request.json:
+            state.option_value = request.json['optionValue']
     return state.jsonify()
 
 
