@@ -21,16 +21,20 @@
 
     <div class="container" id="app">
         <div class="row">
-            <div class="col-4">
+            <div class="col-1">
 
-                <h3>Select a project:</h3>
+                <!-- <h5>Select:</h5> -->
                 <ul class="nav nav-tabs nav-pills flex-column">
                     <li class="nav-item" v-for="item in [1,2,3,4]">
-                        <a class="nav-link" v-bind:class="{active: pid==item}" v-on:click="project(item)">Project {{item}}</a>
+                        <a class="nav-link" v-bind:class="{active: pid==item}" v-on:click="project(item)">Project{{item}}</a>
                     </li>
                 </ul>
-                <img :src="'/project_pic?a='+Math.random()" class="img-thumbnail">
 
+
+
+            </div>
+            <div class="col-5">
+                <img :src="'/project_pic?a='+Math.random()" class="img-thumbnail">
                 <h5>Input image: <select v-model="img">
                     <option v-for="x in files">{{x}}</option>
                 </select></h5>
@@ -49,7 +53,6 @@
                 </div>
 
             </div>
-            <div class="col-2"></div>
             <div class="col-6">
 
                 <div class="row">

@@ -13,6 +13,7 @@ from skimage.filters import roberts, sobel, prewitt
 from skimage.filters import gaussian, median
 from skimage.morphology import disk
 from skimage.morphology import erosion, dilation, opening, closing
+from skimage.morphology import medial_axis, skeletonize
 
 
 APP_PORT = 5005
@@ -66,6 +67,9 @@ class State:
 
     @option_value.setter
     def option_value(self, x):
+        '''
+        Input handler. If illegal, return `pid`-specific option value. 
+        '''
         illegal = True
         if self.pid == 1:
             try:
@@ -107,6 +111,9 @@ class State:
 
     @property
     def choices(self):
+        '''
+        The option choices for each `pid`.
+        '''
         if self.pid == 1:
             return ["ostu", "entropy", "manual"]
         if self.pid == 2:
@@ -114,11 +121,14 @@ class State:
         if self.pid == 3:
             return ["dilation", 'erosion', 'opening', 'closing']
         if self.pid == 4:
-            return ["distance_transform", 'skeleton', 'skeleton_res']
+            return ["distance/ostu", 'skeleton/ostu']
         return []
 
     @property
     def input_visible(self):
+        '''
+        The visiability on the page for input option value.
+        '''
         if self.pid == 1 and (self.choice == "manual"):
             return True
         if self.pid == 2 and (self.choice in ["NR:gaus", "NR:med"]):
@@ -128,6 +138,9 @@ class State:
         return False
 
     def get_result(self):
+        '''
+        The resulting image for each project (Picture 4 on the page). 
+        '''
         arr = np.array(self.grayscale_pil)
         if self.pid == 1:
             if self.choice == 'ostu':
@@ -154,6 +167,17 @@ class State:
             fn_dict = {"dilation": dilation, "erosion": erosion, "opening": opening,"closing": closing}
             fn = fn_dict[self.choice]
             result_arr = fn(arr, disk(self.option_value))
+        elif self.pid == 4:
+            thresh = threshold_otsu(arr)
+            binary_arr = arr > thresh
+            if self.choice == "distance/ostu":
+                skel, distance = medial_axis(binary_arr, return_distance=True)
+                max_distance = np.max(distance)
+                min_distance = np.min(distance)
+                result_arr = (distance-min_distance)/(max_distance-min_distance)*255.
+            if self.choice == 'skeleton/ostu':
+                skel = skeletonize(binary_arr)
+                result_arr = skel*255.
         else:
             result_arr = arr
             
